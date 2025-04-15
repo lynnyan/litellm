@@ -74,6 +74,7 @@ from litellm.litellm_core_utils.prompt_templates.common_utils import (
     get_content_from_model_response,
 )
 from litellm.llms.base_llm.chat.transformation import BaseConfig
+from litellm.llms.base_llm.base_utils import is_bytedance_model
 from litellm.llms.bedrock.common_utils import BedrockModelInfo
 from litellm.llms.custom_httpx.http_handler import AsyncHTTPHandler, HTTPHandler
 from litellm.realtime_api.main import _realtime_health_check
@@ -1911,9 +1912,10 @@ def completion(  # type: ignore # noqa: PLR0915
                 or "https://api.anthropic.com/v1/messages"
             )
 
-            if api_base is not None and not api_base.endswith("/v1/messages"):
+            if is_bytedance_model(model):
+                api_base = f'{api_base}?ak={api_key}'
+            elif api_base is not None and not api_base.endswith("/v1/messages"):
                 api_base += "/v1/messages"
-
             response = anthropic_chat_completions.completion(
                 model=model,
                 messages=messages,

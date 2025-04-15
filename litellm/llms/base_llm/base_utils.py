@@ -175,3 +175,8 @@ def map_developer_role_to_system_role(
         else:
             new_messages.append(m)
     return new_messages
+
+def is_bytedance_model(model: str):
+    if ('gcp' in model or 'aws' in model) and 'claude' in model:
+        return True
+    return False

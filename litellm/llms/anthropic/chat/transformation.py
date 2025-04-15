@@ -11,7 +11,7 @@ from litellm.constants import (
 )
 from litellm.litellm_core_utils.core_helpers import map_finish_reason
 from litellm.litellm_core_utils.prompt_templates.factory import anthropic_messages_pt
-from litellm.llms.base_llm.base_utils import type_to_response_format_param
+from litellm.llms.base_llm.base_utils import type_to_response_format_param, is_bytedance_model
 from litellm.llms.base_llm.chat.transformation import BaseConfig, BaseLLMException
 from litellm.types.llms.anthropic import (
     AllAnthropicToolsValues,
@@ -364,20 +364,24 @@ class AnthropicConfig(BaseConfig):
                 optional_params["max_tokens"] = value
             if param == "tools":
                 # check if optional params already has tools
-                tool_value = self._map_tools(value)
+                if is_bytedance_model(model):
+                    tool_value = value
+                else:
+                    tool_value = self._map_tools(value)
                 optional_params = self._add_tools_to_optional_params(
                     optional_params=optional_params, tools=tool_value
                 )
-            if param == "tool_choice" or param == "parallel_tool_calls":
-                _tool_choice: Optional[
-                    AnthropicMessagesToolChoice
-                ] = self._map_tool_choice(
-                    tool_choice=non_default_params.get("tool_choice"),
-                    parallel_tool_use=non_default_params.get("parallel_tool_calls"),
-                )
+            if not is_bytedance_model(model):
+                if param == "tool_choice" or param == "parallel_tool_calls":
+                    _tool_choice: Optional[
+                        AnthropicMessagesToolChoice
+                    ] = self._map_tool_choice(
+                        tool_choice=non_default_params.get("tool_choice"),
+                        parallel_tool_use=non_default_params.get("parallel_tool_calls"),
+                    )
 
-                if _tool_choice is not None:
-                    optional_params["tool_choice"] = _tool_choice
+                    if _tool_choice is not None:
+                        optional_params["tool_choice"] = _tool_choice
             if param == "stream" and value is True:
                 optional_params["stream"] = value
             if param == "stop" and (isinstance(value, str) or isinstance(value, list)):
@@ -580,11 +584,14 @@ class AnthropicConfig(BaseConfig):
             optional_params["system"] = anthropic_system_message_list
         # Format rest of message according to anthropic guidelines
         try:
-            anthropic_messages = anthropic_messages_pt(
-                model=model,
-                messages=messages,
-                llm_provider="anthropic",
-            )
+            if 'gcp' in model or 'aws' in model:
+                anthropic_messages = messages
+            else:
+                anthropic_messages = anthropic_messages_pt(
+                    model=model,
+                    messages=messages,
+                    llm_provider="anthropic",
+                )
         except Exception as e:
             raise AnthropicError(
                 status_code=400,
