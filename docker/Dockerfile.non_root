@@ -81,6 +81,7 @@ RUN chmod +x docker/prod_entrypoint.sh
 
 # Run Prisma generate as user = nobody
 USER nobody
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 RUN prisma generate
 ### End of Prisma Handling for Non-Root #########################################
