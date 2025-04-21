@@ -424,6 +424,8 @@ class AzureChatCompletion(BaseAzureLLM, BaseLLM):
                 },
             )
 
+            data['extra_headers'] = {'X-TT-LOGID': model_response.id}
+
             headers, response = await self.make_azure_openai_chat_completion_request(
                 azure_client=azure_client,
                 data=data,

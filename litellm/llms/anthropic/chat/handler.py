@@ -312,7 +312,8 @@ class AnthropicChatCompletion(BaseLLM):
             raise ValueError(
                 f"Provider config not found for model: {model} and provider: {custom_llm_provider}"
             )
-
+        if model_response.id:
+            headers["X-TT-LOGID"] = model_response.id
         data = config.transform_request(
             model=model,
             messages=messages,

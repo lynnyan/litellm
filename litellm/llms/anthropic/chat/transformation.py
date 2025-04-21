@@ -585,7 +585,15 @@ class AnthropicConfig(BaseConfig):
         # Format rest of message according to anthropic guidelines
         try:
             if 'gcp' in model or 'aws' in model:
-                anthropic_messages = messages
+                valid_messages = []
+                for message in messages:
+                    if 'content' in message:
+                        if message['content']:
+                            # content 为空，不支持
+                            valid_messages.append(message)
+                    else:
+                        valid_messages.append(message)
+                anthropic_messages = valid_messages
             else:
                 anthropic_messages = anthropic_messages_pt(
                     model=model,
