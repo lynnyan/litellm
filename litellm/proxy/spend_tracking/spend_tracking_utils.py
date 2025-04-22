@@ -1,3 +1,4 @@
+import os
 import hashlib
 import json
 import secrets
@@ -402,7 +403,10 @@ def _sanitize_request_body_for_spend_logs_payload(
     Recursively sanitize request body to prevent logging large base64 strings or other large values.
     Truncates strings longer than 1000 characters and handles nested dictionaries.
     """
-    MAX_STRING_LENGTH = 1000
+    try:
+        MAX_STRING_LENGTH = int(os.getenv("MAX_STRING_LENGTH", 5000))
+    except ValueError:
+        MAX_STRING_LENGTH = 5000  # fallback 值
 
     if visited is None:
         visited = set()

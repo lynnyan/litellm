@@ -6,6 +6,8 @@ import subprocess
 import sys
 import urllib.parse as urlparse
 from typing import TYPE_CHECKING, Any, Optional, Union
+from litellm.byted_utils import TccApiV2
+import bytedenv
 
 import click
 import httpx
@@ -45,6 +47,18 @@ def append_query_params(url, params) -> str:
     modified_url = urlparse.urlunparse(parsed_url._replace(query=encoded_query))
     return modified_url  # type: ignore
 
+def update_config(config):
+    if bytedenv.is_boe():
+    # run in boe
+        return config
+    else:
+        # not in boe
+        tcc_client = TccApiV2()
+        tcc_psm = "tiktok.aiic.nexstone"
+        tcc_key = "litellm"
+        config = tcc_client.get_tcc_conf(tcc_psm, tcc_key)
+        print(f'get tcc configuraion:\n{config}')
+        return config
 
 class ProxyInitializationHelpers:
     @staticmethod
@@ -495,6 +509,7 @@ def run_server(  # noqa: PLR0915
     use_prisma_migrate,
 ):
     args = locals()
+    config = update_config(config)
     if local:
         from proxy_server import (
             KeyManagementSettings,
